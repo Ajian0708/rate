@@ -1,39 +1,38 @@
 <script>
 import axios from 'axios';
-import { reactive } from '@vue/reactivity';
-import { onMounted } from '@vue/runtime-core';
+import {reactive,onMounted} from 'vue';
 
 export default {  
   setup(){
     const tableSetting = reactive({
-      data:{},
-      datafinal:{},
-      dataTotal:0,
-      rowSel:5,
-      rowArr:[5,25,50,100],      
       pages:1,
       pageTotal:1,
       idxStart:1,
       idxEnd:1,
       asc:true,
-      sortData: ()=>{      
-        if(tableSetting.asc){
+      data:{},
+      datafinal:{},
+      dataTotal:0,
+      rowSel:5,
+      rowArr:[5,25,50,100],
+    });
+    const sortData=()=>{
+      if(tableSetting.asc){
           tableSetting.data = Object.values(tableSetting.data).sort((a,b)=>{ return a['value'] - b['value'] })
         }else{
           tableSetting.data = Object.values(tableSetting.data).sort((a,b)=>{ return b['value'] - a['value'] })
         }
         tableSetting.asc = !tableSetting.asc;
 
-        tableSetting.pageIdx();
-      },
-      pagination: ()=>{
+        pageIdx();
+    }
+    const pagination=()=>{
         tableSetting.pages = 1;
         tableSetting.dataTotal = Object.keys(tableSetting.data).length
         tableSetting.pageTotal = Math.ceil(tableSetting.dataTotal / tableSetting.rowSel);
-              
-        tableSetting.pageIdx();   
-      },
-      pageIdx:()=>{
+        pageIdx();   
+    }
+    const pageIdx=()=>{
         tableSetting.idxStart = tableSetting.pages * tableSetting.rowSel - tableSetting.rowSel + 1; 
         tableSetting.idxEnd = tableSetting.pages * tableSetting.rowSel;
         if(tableSetting.idxEnd > tableSetting.dataTotal) tableSetting.idxEnd = tableSetting.dataTotal; 
@@ -44,17 +43,18 @@ export default {
           }                   
         }).map((obj)=>{
           return tableSetting.data[obj]
-        })        
-      },
-      prevPage:()=>{        
+        })       
+    }
+    const prevPage=()=>{
         if(tableSetting.pages > 1) tableSetting.pages--;
-        tableSetting.pageIdx();
-      },
-      nextPage:()=>{
+        pageIdx();
+    }
+    const nextPage=()=>{
         if(tableSetting.pages < tableSetting.pageTotal) tableSetting.pages++;
-        tableSetting.pageIdx();
-      },
-    });
+        pageIdx();
+    }
+    
+    
 
     const getData = ()=>{
       var url = 'https://api.coingecko.com/api/v3/exchange_rates';
@@ -62,9 +62,8 @@ export default {
       .get(url)
       .then((res)=>{
         tableSetting.data = res.data.rates;
-        
-        tableSetting.sortData();
-        tableSetting.pagination()
+        sortData();
+        pagination()
       })
       .catch((error)=>{
         console.log(error)
@@ -75,7 +74,7 @@ export default {
       getData();
     })
 
-    return { tableSetting };
+    return { tableSetting,pagination, prevPage,nextPage,sortData};
   }
 }
 </script>
@@ -87,7 +86,7 @@ export default {
         <th>Name</th>
         <th>Type</th>
         <th>Unit</th>
-        <th @click="tableSetting.sortData">Value <i :class="['fas',  tableSetting.asc ? 'fa-caret-down' : 'fa-caret-up']"></i></th>
+        <th @click="sortData">Value <i :class="['fas',  tableSetting.asc ? 'fa-caret-down' : 'fa-caret-up']"></i></th>
       </thead>
       <tbody>
         <tr v-for="(item,index) in tableSetting.datafinal" :key="item.name">
@@ -99,13 +98,13 @@ export default {
       </tbody>
       <tfoot>
         <tr><td colspan="4" style="text-align:right">
-          <select v-model="tableSetting.rowSel" @change="tableSetting.pagination">
+          <select v-model="tableSetting.rowSel" @change="pagination">
             <option v-for="item in tableSetting.rowArr" :value="item" :key="item">{{item}}</option>
           </select>
           &nbsp;
           {{tableSetting.idxStart}}-{{tableSetting.idxEnd}} of {{tableSetting.dataTotal}}
-          <i :class="['fas', 'fa-chevron-left' , { 'opacity' : tableSetting.pages==1 }]" @click="tableSetting.prevPage"></i>
-          <i :class="['fas', 'fa-chevron-right' , { 'opacity' : tableSetting.pages==tableSetting.pageTotal }]" @click="tableSetting.nextPage"></i>
+          <i :class="['fas', 'fa-chevron-left' , { 'opacity' : tableSetting.pages==1 }]" @click="prevPage"></i>
+          <i :class="['fas', 'fa-chevron-right' , { 'opacity' : tableSetting.pages==tableSetting.pageTotal }]" @click="nextPage"></i>
         </td></tr>        
       </tfoot>
     </table>
